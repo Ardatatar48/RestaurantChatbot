@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bistro AI - Restoran Sipariş Asistanı</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            amber: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.02);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(217, 119, 6, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(217, 119, 6, 0.6);
+    }
+    @keyframes pulseDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1.1); opacity: 1; }
+    }
+    .typing-dot {
+      animation: pulseDot 1.2s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  </style>
+</head>
+<body class="bg-stone-100/70 text-stone-800 font-sans min-h-screen flex flex-col antialiased selection:bg-amber-200">
+
+  <!-- Top Bar -->
+  <header class="bg-white border-b border-stone-200/80 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4">
+      
+      <!-- Brand & Info -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 text-2xl font-bold font-display select-none">
+          🍽️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display font-bold text-base sm:text-xl text-stone-900 leading-tight">Bistro AI</h1>
+            <!-- Dynamic Connection Badge -->
+            <button onclick="openSettingsModal()" id="connBadgeBtn" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition cursor-pointer" title="Bağlantı Detayı ve Ayarlar">
+              <span id="connDot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span id="connLabel">Bağlanıyor...</span>
+            </button>
+          </div>
+          <p class="text-xs text-stone-500 hidden md:block">Qwen 2.5 Masabaşı Çevrimdışı Sipariş Asistanı</p>
+        </div>
+      </div>
+
+      <!-- Right Controls: Auto-detect Badge & Dual End Session Buttons -->
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
+        
+        <!-- Live Detected Language Badge -->
+        <div id="langBadge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-700 text-xs font-semibold select-none shadow-2xs">
+          <span id="langFlag">🌐</span>
+          <span id="langText">Oto Algılama</span>
+        </div>
+
+        <!-- Connection Settings Button -->
+        <button onclick="openSettingsModal()" class="p-2 sm:p-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 transition cursor-pointer active:scale-95 shadow-2xs" title="Bağlantı & IP Ayarları">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+
+        <!-- DUAL ACTION BUTTONS: Turkish and English side-by-side -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <!-- Turkish End Session Button -->
+          <button 
+            type="button" 
+            onclick="resetSessionImmediate('tr')" 
+            class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 border border-red-200 text-xs sm:text-sm font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+            title="Sohbet geçmişini sil ve masayı sıfırla"
+          >
+            <span class="text-sm sm:text-base">🇹🇷</span>
+            <span class="whitespace-nowrap">Sohbeti Bitir</span>
+          </button>
+
+          <!-- English End Session Button -->
+          <button 
+            type="button" 
+            onclick="resetSessionImmediate('en')" 
+            class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 text-xs sm:text-sm font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+            title="Wipe conversation history and clear table"
+          >
+            <span class="text-sm sm:text-base">🇬🇧</span>
+            <span class="whitespace-nowrap">End Chat</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex-1 flex flex-col lg:flex-row gap-4 sm:gap-5">
+    
+    <!-- Sidebar: Menu Cards & Instant Test Prompts -->
+    <aside class="w-full lg:w-80 xl:w-96 flex flex-col gap-3 sm:gap-4 shrink-0">
+      
+      <!-- Restaurant Menu Card -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200 shadow-sm flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📜</span>
+            <h2 class="font-display font-bold text-stone-900" id="menuTitle">Ürün Listemiz / Menu</h2>
+          </div>
+          <span class="text-[11px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">4 Çeşit / Items</span>
+        </div>
+        <p class="text-xs text-stone-500 leading-relaxed" id="menuSubtitle">
+          Asistanımız sadece bu ürünlerin siparişini alır. Kartlara basarak hemen sorabilirsiniz:
+        </p>
+
+        <!-- Menu Grid -->
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <!-- Lemonade -->
+          <button type="button" onclick="quickFillPrompt('Bana bir limonata getirir misin?')" class="group p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100 border border-amber-200/70 text-left transition flex flex-col gap-1 cursor-pointer">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🍋</span>
+            <div class="font-semibold text-xs text-stone-800">Limonata</div>
+            <div class="text-[10px] text-amber-700">Lemonade</div>
+          </button>
+
+          <!-- Cheeseburger -->
+          <button type="button" onclick="quickFillPrompt('Bir cheeseburger alabilir miyim?')" class="group p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100 border border-amber-200/70 text-left transition flex flex-col gap-1 cursor-pointer">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🍔</span>
+            <div class="font-semibold text-xs text-stone-800">Cheeseburger</div>
+            <div class="text-[10px] text-amber-700">Cheeseburger</div>
+          </button>
+
+          <!-- French Fries -->
+          <button type="button" onclick="quickFillPrompt('Patates kızartması istiyorum')" class="group p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100 border border-amber-200/70 text-left transition flex flex-col gap-1 cursor-pointer">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🍟</span>
+            <div class="font-semibold text-xs text-stone-800">Patates Kızartması</div>
+            <div class="text-[10px] text-amber-700">French Fries</div>
+          </button>
+
+          <!-- Salad -->
+          <button type="button" onclick="quickFillPrompt('Taze bir salata rica ediyorum')" class="group p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100 border border-amber-200/70 text-left transition flex flex-col gap-1 cursor-pointer">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🥗</span>
+            <div class="font-semibold text-xs text-stone-800">Salata</div>
+            <div class="text-[10px] text-amber-700">Salad</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Test Scenarios Box -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200 shadow-sm flex flex-col gap-2.5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-stone-400 font-display flex items-center justify-between">
+          <span>⚡ Hızlı Test Senaryoları</span>
+          <span class="text-[10px] lowercase text-stone-400 font-normal">tıkla ve gönder</span>
+        </h3>
+        
+        <div class="flex flex-col gap-1.5">
+          <!-- Positive Turkish -->
+          <button type="button" onclick="quickFillPrompt('Bana bir soğuk limonata getirir misin?')" class="text-left text-xs px-3 py-2 rounded-lg bg-emerald-50/60 hover:bg-emerald-100/70 text-emerald-900 border border-emerald-200/60 transition flex items-center justify-between cursor-pointer">
+            <span class="truncate">🍋 "Soğuk limonata alabilir miyim?"</span>
+            <span class="text-[10px] font-semibold text-emerald-700 ml-1 shrink-0">TR Kabul</span>
+          </button>
+
+          <!-- Positive English -->
+          <button type="button" onclick="quickFillPrompt('I need a cheeseburger and french fries fast!')" class="text-left text-xs px-3 py-2 rounded-lg bg-emerald-50/60 hover:bg-emerald-100/70 text-emerald-900 border border-emerald-200/60 transition flex items-center justify-between cursor-pointer">
+            <span class="truncate">🍔 "I need cheeseburger and fries"</span>
+            <span class="text-[10px] font-semibold text-emerald-700 ml-1 shrink-0">EN Accept</span>
+          </button>
+
+          <!-- Negative Turkish (Airpods) -->
+          <button type="button" onclick="quickFillPrompt('Masada AirPods kulaklığımı unuttum nerede bulabilirim?')" class="text-left text-xs px-3 py-2 rounded-lg bg-red-50/60 hover:bg-red-100/70 text-red-900 border border-red-200/60 transition flex items-center justify-between cursor-pointer">
+            <span class="truncate">🎧 "Masada AirPods unuttum nerede?"</span>
+            <span class="text-[10px] font-semibold text-red-700 ml-1 shrink-0">TR Ret</span>
+          </button>
+
+          <!-- Negative English (Airpods) -->
+          <button type="button" onclick="quickFillPrompt('Hey I lost my airpods here can you find them?')" class="text-left text-xs px-3 py-2 rounded-lg bg-red-50/60 hover:bg-red-100/70 text-red-900 border border-red-200/60 transition flex items-center justify-between cursor-pointer">
+            <span class="truncate">🎧 "Hey I lost my airpods here"</span>
+            <span class="text-[10px] font-semibold text-red-700 ml-1 shrink-0">EN Reject</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Offline & Privacy card -->
+      <div class="rounded-2xl bg-stone-900 text-stone-300 p-4 text-xs flex items-start gap-3 shadow-sm border border-stone-800">
+        <span class="text-xl">🛡️</span>
+        <div class="flex flex-col gap-0.5">
+          <span class="font-bold text-white text-xs">%100 Yerel, Gizli ve Sıfır Log</span>
+          <span class="text-[11px] text-stone-400 leading-relaxed">
+            Müşteri kalkıp kırmızı butonlara bastığı an JavaScript belleğindeki tüm konuşma dizisi kalıcı olarak imha edilir.
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Panel: Conversation UI -->
+    <section class="flex-1 bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col overflow-hidden min-h-[520px] lg:min-h-[620px]">
+      
+      <!-- Chat Sub-header -->
+      <div class="px-5 py-3 border-b border-stone-100 bg-stone-50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+          <span class="text-xs font-semibold text-stone-800" id="tableHeaderTitle">Masa Sipariş Asistanı / Table Ordering Bot</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-stone-500 font-mono bg-stone-200/60 px-2 py-0.5 rounded" id="modelDisplayTag">Model: my-restaurant-bot</span>
+        </div>
+      </div>
+
+      <!-- Messages Scroll Area -->
+      <div id="chatMessages" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
+        
+        <!-- Welcome Dual-language Bubble -->
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm text-base">
+            🤖
+          </div>
+          <div class="max-w-[90%] sm:max-w-[80%] bg-amber-50/90 border border-amber-200/80 rounded-2xl rounded-tl-xs px-4 py-3.5 text-stone-800 text-sm shadow-2xs">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="font-bold text-amber-950 font-display text-sm sm:text-base">Hoş Geldiniz! • Welcome!</span>
+              <span class="text-[10px] bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded font-medium">TR / EN</span>
+            </div>
+            <div class="space-y-2 text-stone-700 text-xs sm:text-sm leading-relaxed">
+              <p>🇹🇷 Merhaba! Menümüzden <strong>Limonata</strong>, <strong>Cheeseburger</strong>, <strong>Patates Kızartması</strong> veya <strong>Salata</strong> getirebilirim. Ne alırsınız?</p>
+              <p class="text-stone-500 pt-1.5 border-t border-amber-200/50">🇬🇧 Hello! I can bring you <strong>Lemonade</strong>, <strong>Cheeseburger</strong>, <strong>French Fries</strong>, or <strong>Salad</strong>. You can type in Turkish or English!</p>
+            </div>
+            <span class="block text-[10px] text-stone-400 mt-2 text-right">Şimdi / Now</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="typingIndicator" class="hidden px-6 py-2">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-800 flex items-center justify-center text-xs">
+            🤖
+          </div>
+          <div class="bg-stone-100 rounded-2xl rounded-tl-xs px-4 py-2.5 flex items-center gap-1.5 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-stone-400 typing-dot"></span>
+            <span class="w-2 h-2 rounded-full bg-stone-400 typing-dot"></span>
+            <span class="w-2 h-2 rounded-full bg-stone-400 typing-dot"></span>
+            <span class="text-xs text-stone-500 ml-2 font-medium" id="typingLabel">Asistan yanıtlıyor...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Field & Send Action -->
+      <div class="p-3.5 sm:p-4 border-t border-stone-100 bg-white">
+        <form id="chatForm" onsubmit="handleFormSubmit(event)" class="flex items-center gap-2">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Mesajınızı buraya yazın (Örn: Bana limonata getirir misin?)..." 
+            autocomplete="off"
+            class="flex-1 bg-stone-50 hover:bg-stone-100/70 focus:bg-white border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 transition outline-none"
+          />
+          <button 
+            type="submit" 
+            id="sendButton"
+            class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white px-5 py-3 rounded-xl font-medium text-sm transition shadow-sm shadow-amber-500/30 flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span id="sendBtnText">Gönder</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </form>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Settings & CORS Info Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-stone-100 animate-in fade-in duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <h3 class="font-display font-bold text-lg text-stone-900">Bağlantı ve Ollama Ayarları</h3>
+        </div>
+        <button type="button" onclick="closeSettingsModal()" class="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 py-4 text-xs">
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Ollama API URL</label>
+          <input type="text" id="cfgUrl" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 font-mono text-stone-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" value="http://localhost:11434">
+          <p class="text-[11px] text-stone-400 mt-1">Yerel bilgisayarda `http://localhost:11434`, masadaki tablette `http://192.168.1.X:11434`</p>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Model Adı</label>
+          <input type="text" id="cfgModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 font-mono text-stone-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" value="my-restaurant-bot">
+          <p class="text-[11px] text-stone-400 mt-1">Modelfile ile oluşturduğunuz model adı</p>
+        </div>
+
+        <!-- Mode selector -->
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70">
+          <div>
+            <div class="font-semibold text-stone-900">Doğrudan Yerel Simülatör Modu</div>
+            <div class="text-[11px] text-stone-600">Ollama açık olmasa bile Qwen kurallarını tarayıcı içinde anında çalıştırır.</div>
+          </div>
+          <input type="checkbox" id="cfgForceSim" class="w-5 h-5 accent-amber-500 cursor-pointer">
+        </div>
+
+        <!-- Terminal Command Box -->
+        <div class="p-3.5 bg-stone-900 text-stone-200 rounded-xl space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-amber-400 text-[11px]">CORS İzni ile Ollama Başlatma:</span>
+            <button type="button" onclick="copyCorsCommand()" class="text-[10px] bg-stone-800 hover:bg-stone-700 px-2 py-0.5 rounded text-stone-300 cursor-pointer border border-stone-700">Kopyala</button>
+          </div>
+          <p class="text-[11px] text-stone-400">Tarayıcının localhost'a erişmesi için terminalde şunu çalıştırın:</p>
+          <code id="corsCmdCode" class="block bg-stone-950 p-2 rounded text-[11px] font-mono text-amber-300 select-all overflow-x-auto">set OLLAMA_ORIGINS=* && ollama serve</code>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+        <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-stone-600 hover:bg-stone-100 font-medium text-xs cursor-pointer">Vazgeç</button>
+        <button type="button" onclick="saveSettings()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs cursor-pointer">Kaydet ve Dene</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastArea" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<script>
+  /* --- STATE MANAGEMENT --- */
+  let chatHistory = [];
+  let isSending = false;
+  let activeLang = 'neutral'; // 'neutral', 'tr', 'en'
+  let appConfig = {
+    url: localStorage.getItem('bistro_url') || 'http://localhost:11434',
+    model: localStorage.getItem('bistro_model') || 'my-restaurant-bot',
+    forceSim: localStorage.getItem('bistro_sim') === 'true' || false,
+    timeoutMs: 7000 // 7-second responsive timeout
+  };
+
+  /* Exact Restaurant Bot System Prompt Rules */
+  const MENU_KEYWORDS = [
+    'limonata', 'lemonade',
+    'cheeseburger', 'burger',
+    'patates', 'french fries', 'fries', 'patates kızartması',
+    'salata', 'salad'
+  ];
+
+  const RESPONSES = {
+    tr: {
+      enthusiastic: 'Harika! Hemen en kısa sürede getiriyorum!',
+      reject: 'Üzgünüm, bu benim uzmanlık alanım değil, yardımcı olamam.'
+    },
+    en: {
+      enthusiastic: 'Hey! I will bring it to you as fast as I can!',
+      reject: "Sorry, it is not my profession, I can't help with that."
+    }
+  };
+
+  /* --- LANGUAGE DETECTION --- */
+  function detectLanguage(text) {
+    if (!text || typeof text !== 'string') return activeLang !== 'neutral' ? activeLang : 'tr';
+    const lower = text.toLowerCase();
+
+    // Turkish specific characters
+    if (/[çğıöşü]/i.test(lower)) return 'tr';
+
+    // Turkish common phrases
+    const trMatches = /\b(bana|bir|iki|istiyorum|alabilir|miyim|misin|limonata|patates|salata|hesap|lütfen|merhaba|selam|kaybettim|nerede|unuttum)\b/i;
+    if (trMatches.test(lower)) return 'tr';
+
+    // English common phrases
+    const enMatches = /\b(i|can|could|would|want|need|get|bring|order|give|lemonade|fries|salad|burger|cheeseburger|hello|hi|please|lost|airpods|where|what)\b/i;
+    if (enMatches.test(lower)) return 'en';
+
+    return activeLang !== 'neutral' ? activeLang : 'tr';
+  }
+
+  function updateLanguageUI(lang) {
+    activeLang = lang;
+    const badge = document.getElementById('langBadge');
+    const flag = document.getElementById('langFlag');
+    const text = document.getElementById('langText');
+    const input = document.getElementById('chatInput');
+    const sendBtnText = document.getElementById('sendBtnText');
+    const typingLabel = document.getElementById('typingLabel');
+
+    if (lang === 'tr') {
+      flag.innerText = '🇹🇷';
+      text.innerText = 'Türkçe Algılandı';
+      badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-semibold select-none shadow-2xs';
+      input.placeholder = 'Mesajınızı yazın (Örn: Bir limonata alabilir miyim?)...';
+      sendBtnText.innerText = 'Gönder';
+      typingLabel.innerText = 'Asistan yanıtlıyor...';
+    } else if (lang === 'en') {
+      flag.innerText = '🇬🇧';
+      text.innerText = 'English Detected';
+      badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-semibold select-none shadow-2xs';
+      input.placeholder = 'Type your message (e.g. Can I get a cheeseburger?)...';
+      sendBtnText.innerText = 'Send';
+      typingLabel.innerText = 'Assistant is typing...';
+    } else {
+      flag.innerText = '🌐';
+      text.innerText = 'Oto Algılama';
+      badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-700 text-xs font-semibold select-none shadow-2xs';
+      input.placeholder = 'Mesajınızı buraya yazın (Örn: Bana limonata getirir misin?)...';
+      sendBtnText.innerText = 'Gönder';
+      typingLabel.innerText = 'Asistan yanıtlıyor...';
+    }
+  }
+
+  /* --- INPUT & FORM SUBMISSION --- */
+  function quickFillPrompt(text) {
+    const input = document.getElementById('chatInput');
+    input.value = text;
+    handleFormSubmit();
+  }
+
+  async function handleFormSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (isSending) return;
+
+    const input = document.getElementById('chatInput');
+    const userText = input.value.trim();
+    if (!userText) return;
+
+    // Detect language on message submit
+    const detected = detectLanguage(userText);
+    updateLanguageUI(detected);
+
+    // Render User Message
+    appendMessageBubble('user', userText);
+    input.value = '';
+
+    // Lock UI safely
+    setLoadingState(true);
+
+    try {
+      // Execute response call with fail-safe fallback
+      const botResponse = await requestBotResponse(userText, detected);
+      appendMessageBubble('bot', botResponse);
+    } catch (err) {
+      console.error("Dispatch error handled, falling back to local simulation:", err);
+      const fallback = runInternalRuleEngine(userText, detected);
+      appendMessageBubble('bot', fallback);
+    } finally {
+      // CRITICAL: Button is NEVER stuck or disabled permanently
+      setLoadingState(false);
+      input.focus();
+    }
+  }
+
+  function setLoadingState(loading) {
+    isSending = loading;
+    const btn = document.getElementById('sendButton');
+    const typing = document.getElementById('typingIndicator');
+
+    if (loading) {
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      typing.classList.remove('hidden');
+      scrollChatToBottom();
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('opacity-60', 'cursor-not-allowed');
+      typing.classList.add('hidden');
+    }
+  }
+
+  /* Internal Qwen Rule Simulator (Matches System Prompt 100%) */
+  function runInternalRuleEngine(promptText, lang) {
+    const lower = promptText.toLowerCase();
+    const effectiveLang = (lang === 'en') ? 'en' : 'tr';
+
+    // Check if user is asking for items in product list
+    const isMenuOrder = MENU_KEYWORDS.some(kw => lower.includes(kw));
+
+    if (isMenuOrder) {
+      return RESPONSES[effectiveLang].enthusiastic;
+    } else {
+      return RESPONSES[effectiveLang].reject;
+    }
+  }
+
+  /* Main Bot Fetcher with AbortController Timeout */
+  async function requestBotResponse(promptText, lang) {
+    chatHistory.push({ role: 'user', content: promptText });
+
+    // If user explicitly enabled simulator mode
+    if (appConfig.forceSim) {
+      await new Promise(r => setTimeout(r, 350));
+      const simReply = runInternalRuleEngine(promptText, lang);
+      chatHistory.push({ role: 'assistant', content: simReply });
+      return simReply;
+    }
+
+    // Attempt real Ollama fetch with strict timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), appConfig.timeoutMs);
+
+    try {
+      const response = await fetch(`${appConfig.url}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: appConfig.model,
+          stream: false,
+          keep_alive: -1,
+          messages: chatHistory
+        })
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const reply = (data.message && data.message.content) 
+        ? data.message.content 
+        : runInternalRuleEngine(promptText, lang);
+
+      chatHistory.push({ role: 'assistant', content: reply });
+      updateConnectionBadge('online');
+      return reply;
+
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.warn("Ollama unavailable (CORS/Offline). Running rule engine:", error.message);
+      
+      updateConnectionBadge('sim');
+      
+      // Transparent fallback to local simulator
+      const fallbackReply = runInternalRuleEngine(promptText, lang);
+      chatHistory.push({ role: 'assistant', content: fallbackReply });
+      return fallbackReply;
+    }
+  }
+
+  /* --- UI HELPERS --- */
+  function appendMessageBubble(role, text) {
+    const container = document.getElementById('chatMessages');
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.className = 'flex items-start gap-3';
+
+    if (role === 'user') {
+      bubbleWrapper.innerHTML = `
+        <div class="ml-auto flex items-start gap-2.5 max-w-[85%] sm:max-w-[75%] justify-end">
+          <div class="bg-amber-500 text-white rounded-2xl rounded-tr-xs px-4 py-3 text-sm shadow-sm">
+            <p class="leading-relaxed whitespace-pre-wrap">${escapeHtml(text)}</p>
+            <span class="block text-[10px] text-amber-100/90 mt-1.5 text-right font-medium">${timeStr}</span>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-stone-800 text-white flex items-center justify-center shrink-0 text-xs shadow-sm select-none">
+            👤
+          </div>
+        </div>
+      `;
+    } else {
+      bubbleWrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm text-sm select-none">
+          🤖
+        </div>
+        <div class="max-w-[85%] sm:max-w-[80%] bg-stone-50 border border-stone-200/80 rounded-2xl rounded-tl-xs px-4 py-3 text-stone-800 text-sm shadow-2xs">
+          <p class="leading-relaxed whitespace-pre-wrap font-medium">${escapeHtml(text)}</p>
+          <span class="block text-[10px] text-stone-400 mt-1.5 text-right">${timeStr}</span>
+        </div>
+      `;
+    }
+
+    container.appendChild(bubbleWrapper);
+    scrollChatToBottom();
+  }
+
+  function scrollChatToBottom() {
+    const container = document.getElementById('chatMessages');
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+  }
+
+  /* --- INSTANT SESSION RESET (TRIGGERED BY TR OR EN BUTTON) --- */
+  function resetSessionImmediate(targetLang) {
+    // 1. Permanently wipe in-memory chat array
+    chatHistory = [];
+    
+    // 2. Set UI language based on clicked button
+    if (targetLang === 'tr') {
+      updateLanguageUI('tr');
+      showToast('🇹🇷 Masa hafızası temizlendi! Yeni sipariş için hazır.', 'info');
+    } else {
+      updateLanguageUI('en');
+      showToast('🇬🇧 Chat history wiped! Ready for new order.', 'info');
+    }
+
+    // 3. Reset DOM conversation container with fresh bilingual welcome message
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm text-base">
+          🤖
+        </div>
+        <div class="max-w-[90%] sm:max-w-[80%] bg-amber-50/90 border border-amber-200/80 rounded-2xl rounded-tl-xs px-4 py-3.5 text-stone-800 text-sm shadow-2xs">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="font-bold text-amber-950 font-display text-sm sm:text-base">Hoş Geldiniz! • Welcome!</span>
+            <span class="text-[10px] bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded font-medium">TR / EN</span>
+          </div>
+          <div class="space-y-2 text-stone-700 text-xs sm:text-sm leading-relaxed">
+            <p>🇹🇷 Merhaba! Menümüzden <strong>Limonata</strong>, <strong>Cheeseburger</strong>, <strong>Patates Kızartması</strong> veya <strong>Salata</strong> getirebilirim. Ne alırsınız?</p>
+            <p class="text-stone-500 pt-1.5 border-t border-amber-200/50">🇬🇧 Hello! I can bring you <strong>Lemonade</strong>, <strong>Cheeseburger</strong>, <strong>French Fries</strong>, or <strong>Salad</strong>. You can type in Turkish or English!</p>
+          </div>
+          <span class="block text-[10px] text-stone-400 mt-2 text-right">Şimdi / Now</span>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('chatInput').value = '';
+    document.getElementById('chatInput').focus();
+  }
+
+  /* --- CONNECTION STATUS & PING --- */
+  function updateConnectionBadge(status) {
+    const badge = document.getElementById('connBadgeBtn');
+    const dot = document.getElementById('connDot');
+    const label = document.getElementById('connLabel');
+
+    if (status === 'online') {
+      badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer';
+      dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      label.innerText = 'Ollama Aktif';
+    } else {
+      badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition cursor-pointer';
+      dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+      label.innerText = 'Simülatör Modu';
+    }
+  }
+
+  async function checkOllamaConnection() {
+    if (appConfig.forceSim) {
+      updateConnectionBadge('sim');
+      return;
+    }
+
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`${appConfig.url}/api/tags`, { signal: controller.signal });
+      clearTimeout(tid);
+      if (res.ok) {
+        updateConnectionBadge('online');
+      } else {
+        updateConnectionBadge('sim');
+      }
+    } catch {
+      updateConnectionBadge('sim');
+    }
+  }
+
+  /* --- MODAL & SETTINGS --- */
+  function openSettingsModal() {
+    document.getElementById('cfgUrl').value = appConfig.url;
+    document.getElementById('cfgModel').value = appConfig.model;
+    document.getElementById('cfgForceSim').checked = appConfig.forceSim;
+    document.getElementById('settingsModal').classList.remove('hidden');
+  }
+
+  function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.add('hidden');
+  }
+
+  function saveSettings() {
+    appConfig.url = document.getElementById('cfgUrl').value.trim() || 'http://localhost:11434';
+    appConfig.model = document.getElementById('cfgModel').value.trim() || 'my-restaurant-bot';
+    appConfig.forceSim = document.getElementById('cfgForceSim').checked;
+
+    localStorage.setItem('bistro_url', appConfig.url);
+    localStorage.setItem('bistro_model', appConfig.model);
+    localStorage.setItem('bistro_sim', appConfig.forceSim);
+
+    document.getElementById('modelDisplayTag').innerText = `Model: ${appConfig.model}`;
+    closeSettingsModal();
+    showToast('Ayarlar kaydedildi / Settings saved.', 'success');
+    checkOllamaConnection();
+  }
+
+  function copyCorsCommand() {
+    const textToCopy = "set OLLAMA_ORIGINS=* && ollama serve";
+    const dummy = document.createElement("textarea");
+    document.body.appendChild(dummy);
+    dummy.value = textToCopy;
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+    showToast("CORS komutu kopyalandı!", "success");
+  }
+
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastArea');
+    const toast = document.createElement('div');
+    const colorClass = type === 'success' 
+      ? 'bg-emerald-800 text-white border-emerald-700' 
+      : 'bg-stone-900 text-white border-stone-800';
+
+    toast.className = `px-4 py-2.5 rounded-xl border text-xs font-medium shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${colorClass}`;
+    toast.innerHTML = `<span>ℹ️</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    });
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-2');
+      setTimeout(() => toast.remove(), 300);
+    }, 2800);
+  }
+
+  /* Live detection while typing */
+  document.getElementById('chatInput').addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.length > 2 && activeLang === 'neutral') {
+      const det = detectLanguage(val);
+      if (det) updateLanguageUI(det);
+    }
+  });
+
+  // Initialization
+  window.addEventListener('DOMContentLoaded', () => {
+    updateLanguageUI('neutral');
+    document.getElementById('modelDisplayTag').innerText = `Model: ${appConfig.model}`;
+    checkOllamaConnection();
+  });
+</script>
+
+</body>
+</html>
